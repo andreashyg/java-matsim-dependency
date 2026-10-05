@@ -2,7 +2,6 @@ package org.matsim.ma_andreas;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import picocli.CommandLine;
 import org.jspecify.annotations.NonNull;
@@ -18,7 +17,6 @@ import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
-import static org.matsim.api.core.v01.Id.createVehicleTypeId;
 
 @CommandLine.Command( header = ":: RunSingleBraessNoSpillbackIteration ::", version = "1.0")
 @MATSimApplication.Prepare({
@@ -30,34 +28,16 @@ import static org.matsim.api.core.v01.Id.createVehicleTypeId;
 public class SingleBraessNoSpillbackIteration extends MATSimApplication {
 
 	@CommandLine.Option(
-			names = "--existingRunsDir",
-			description = "Directory containing existing runs to read from."
+			names = "--correctedPopFile",
+			description = "Path to the corrected population file."
 	)
-	private String existingRunsDir;
-
-	@CommandLine.Option(
-			names = "--baseOutputDir",
-			description = "Base output directory for the simulation run."
-	)
-	private String baseOutputDir;
-
-	@CommandLine.Option(
-			names = "--replanningVariant",
-			description = "Replanning variant to use for the simulation run."
-	)
-	private String replanningVariant;
+	private String correctedPopFile;
 
 	@CommandLine.Option(
 			names = "--beta",
 			description = "Beta parameter for the simulation run."
 	)
 	private Integer beta;
-
-	@CommandLine.Option(
-			names = "--readFromRandom",
-			description = "Random seed of the run to read from. This is used to read the plans file from a previous run."
-	)
-	private Integer readFromRandom;
 
 	@CommandLine.Option(
 			names = "--useRandom",
@@ -88,21 +68,10 @@ public class SingleBraessNoSpillbackIteration extends MATSimApplication {
 	@Override
 	protected Config prepareConfig(Config config) {
 
-		// get (longer) replanning variant string, used in the folder structure of the original java runs
-		if (replanningVariant == null) {
-			throw new IllegalArgumentException("Missing --replanningVariant");
-		}
-		// TODO technically, this should also be read from the config.yaml
-		String replanning_string_for_original_dir = getReplanningStringForOriginalDir(replanningVariant);
-
 		if (deleteOutputDirIfExisting) {
 			System.out.println("Deleting output directory if it exists.");
 			config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		}
-
-		// possibly modify config here
-
-		// String outputDir = String.format("%s/%s/rerun_last_java_iter/beta%d/readFromRandom%d/useRandom%d/", baseOutputDir, replanningVariant, beta, readFromRandom, useRandom);
 
 		System.out.println("Setting output directory to: " + outputDir);
 		config.controller().setOutputDirectory(outputDir);
@@ -111,12 +80,13 @@ public class SingleBraessNoSpillbackIteration extends MATSimApplication {
 		config.global().setRandomSeed(useRandom);
 
 		// set vehicles file
+		// We no longer use this, we create the vehicles in prepareScenario instead
+
 		// String vehiclesFile = String.format("../../../no_spillback_beta%d_vehicles.xml", beta);
 		//config.vehicles().setVehiclesFile(vehiclesFile);
 
 		// set (input) plans file
-		String plansFile = String.format("beta%drandom%d.output_plans.xml.gz", beta, readFromRandom);
-		config.plans().setInputFile(plansFile);
+		config.plans().setInputFile(correctedPopFile);
 
 		// set network file
 		String networkFile = "../../../no_spillback_network.xml";
@@ -155,10 +125,6 @@ public class SingleBraessNoSpillbackIteration extends MATSimApplication {
         double pcuEquivalents = 1.0 / Math.pow(beta, 2);
         double vehLength = 7.5 / Math.pow(beta, 2);
 
-		// remove the default vehicle type, which has wrong pcu equivalents and length
-		//Id<VehicleType> defaultVehicleTypeId = Id.createVehicleTypeId("defaultVehicleType");
-		//scenario.getVehicles().removeVehicleType(defaultVehicleTypeId);
-
 		// create a vehicle type with correct pcu equivalents and length
 		VehicleType myVehType = scenario.getVehicles().getFactory().createVehicleType(Id.create("defaultVehicleType", VehicleType.class));
 		myVehType.setPcuEquivalents(pcuEquivalents);
@@ -169,28 +135,9 @@ public class SingleBraessNoSpillbackIteration extends MATSimApplication {
 
 		// create a vehicle of this type for all agents
 		for (Id<Person> personId : scenario.getPopulation().getPersons().keySet()) {
-            //Id<Vehicle> current_veh_id;
-            //current_veh_id = Id.createVehicleId(personId);
-
-			// remove the current vehicle of the person
-			// scenario.getVehicles().getVehicles().remove(current_veh_id);
-
 			// add a new vehicle of the correct type for the person
 			scenario.getVehicles().addVehicle(scenario.getVehicles().getFactory().createVehicle(Id.createVehicleId(personId), myVehType));
 		}
-
-
-
-
-
-		// TODO this doesn't help, because it's a parsing error, not a runtime error. That was different in the time step problem apparently.
-		// Id<VehicleType> defaultVehicleTypeId = Id.createVehicleTypeId("defaultVehicleType");
-
-		// modify length and pcu equivalents based on beta (since they are not written correctly in the files)
-		// scenario.getVehicles().getVehicleTypes().get(defaultVehicleTypeId).setLength(7.5 / Math.pow(beta, 2));
-		// scenario.getVehicles().getVehicleTypes().get(defaultVehicleTypeId).setPcuEquivalents(1.0 / Math.pow(beta, 2));
-
-
 		// ---
 
 	}
