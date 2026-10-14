@@ -17,6 +17,9 @@ import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
+import static org.matsim.core.utils.misc.Time.TIMEFORMAT_HHMMSSDOTSS;
+import static org.matsim.core.utils.misc.Time.setDefaultTimeFormat;
+
 
 @CommandLine.Command( header = ":: RunSingleBraessNoSpillbackIteration ::", version = "1.0")
 @MATSimApplication.Prepare({
@@ -101,6 +104,9 @@ public class SingleBraessNoSpillbackIteration extends MATSimApplication {
 
 		// manually set time step size based on beta, since the config files are not written correctly (rounded to secs)
 		config.qsim().setTimeStepSize(1. / beta);
+
+		// make sure that times are written in decimal format, so nothing is lost.
+		setDefaultTimeFormat(TIMEFORMAT_HHMMSSDOTSS);
 		// ---
 
 		return config;
