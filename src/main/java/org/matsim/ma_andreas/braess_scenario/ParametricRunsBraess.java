@@ -168,6 +168,7 @@ public class ParametricRunsBraess {
 				VehicleType myVehType = scenario.getVehicles().getFactory().createVehicleType(Id.create("defaultVehicleType", VehicleType.class));
 				myVehType.setPcuEquivalents(pcuEquivalents);
 				myVehType.setLength(vehLength);
+				myVehType.setNetworkMode("car");
 				scenario.getVehicles().addVehicleType(myVehType);
 				// create a vehicle of this type for all agents
 				for (Id<Person> personId : scenario.getPopulation().getPersons().keySet()) {
