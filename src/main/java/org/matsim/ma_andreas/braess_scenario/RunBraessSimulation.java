@@ -73,7 +73,8 @@ public final class RunBraessSimulation {
 	private static final double SIMULATION_PERIOD_S = 100; // in seconds
 	private static final double SIMULATION_START_TIME = 0.0; // seconds from midnight
 	
-	private static final InitRoutes INIT_ROUTES_TYPE = InitRoutes.ALL;
+//	private static final InitRoutes INIT_ROUTES_TYPE = InitRoutes.ALL;
+	private static final InitRoutes INIT_ROUTES_TYPE = InitRoutes.ONLY_MIDDLE;  // by using ONLY_MIDDLE, the agents will have plans with legs without routes, so they will reroute immediately, leading to the addition of access/egress legs
 	// initial score for all initial plans (if to low, to many agents switch to outer routes simultaneously)
 	private static final Double INIT_PLAN_SCORE = null; // should be definitely higher than the executed ones at the beginning such that they will be chosen and updated
 	
