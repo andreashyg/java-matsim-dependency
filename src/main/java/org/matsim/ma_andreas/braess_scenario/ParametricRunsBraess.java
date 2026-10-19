@@ -58,7 +58,7 @@ public class ParametricRunsBraess {
 	public static void main(String[] args) {
 		
 //		String overallAnalysisDir = "matsimOutput/braess/";
-		String overallAnalysisDir = "../../runs-svn/braess/refinement/";
+		String overallAnalysisDir = "../../../runs-svn/braess/refinement/no_spillback_scenario/";
 		overallAnalysisDir += OutputUtils.getCurrentDateIncludingTime() + "_vehScaling" + vehScaling + "_timeScaling" + timeScaling + "/";
 		new File(overallAnalysisDir).mkdirs();
 		final PrintStream overallRunTimeWritingStream = prepareOverallStream(overallAnalysisDir + "runTime.txt", "beta \talpha \trandomSeed \trunTime");
