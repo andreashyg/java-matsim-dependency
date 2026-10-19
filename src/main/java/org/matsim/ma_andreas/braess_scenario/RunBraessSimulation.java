@@ -112,6 +112,9 @@ public final class RunBraessSimulation {
 	static Config defineConfig(int lastIteration) {
 		Config config = ConfigUtils.createConfig();
 
+		// disable network route consistency check, as the plans file contains unreachable nodes/links
+		config.routing().setNetworkRouteConsistencyCheck(RoutingConfigGroup.NetworkRouteConsistencyCheck.disable);
+
 		// set number of iterations
 		config.controller().setLastIteration(lastIteration);
 
