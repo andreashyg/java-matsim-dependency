@@ -127,12 +127,15 @@ public final class TtCreateBraessPopulation {
 			// create a start activity at link 0_1
 			Activity startAct = population.getFactory()
 					.createActivityFromLinkId("dummy", Id.createLinkId("0_1"));
+			startAct.setCoord(this.network.getNodes().get(Id.createNodeId("0")).getCoord());
+
 			// distribute agents uniformly between simulationStartTime and (simulationStartTime + simulationPeriod) am.
 			startAct.setEndTime(simulationStartTime + (double)(i)/numberOfPersonsPerSec);
 		
 			// create a drain activity at link 5_6
 			Activity drainAct = population.getFactory().createActivityFromLinkId(
 					"dummy", Id.createLinkId("5_6"));
+			drainAct.setCoord(this.network.getNodes().get(Id.createNodeId("6")).getCoord());
 			
 			// create a dummy leg
 			Leg leg1 = population.getFactory().createLeg(TransportMode.car);
@@ -220,13 +223,64 @@ public final class TtCreateBraessPopulation {
 		}
 	}
 
+	/**
+	 * Creates an access leg.
+	 */
+	private Leg createAccessLeg(double departureTime) {
+		Leg leg = population.getFactory().createLeg(TransportMode.walk);
+		leg.setDepartureTime(departureTime);
+		leg.setRoutingMode("car");
+
+		Route route = RouteUtils.createGenericRouteImpl(Id.createLinkId("0_1"), Id.createLinkId("0_1"));
+		route.setTravelTime(0.0);
+		route.setDistance(0.0);
+		leg.setRoute(route);
+		return leg;
+	}
+
+	private Activity createAccessCarInteraction() {
+		Activity act = population.getFactory().createInteractionActivityFromLinkId("car interaction", Id.createLinkId("0_1"));
+		act.setCoord(this.network.getNodes().get(Id.createNodeId("0")).getCoord());
+		return act;
+	}
+
+	private Activity createEgressCarInteraction() {
+		Activity act = population.getFactory().createInteractionActivityFromLinkId("car interaction", Id.createLinkId("5_6"));
+		act.setCoord(this.network.getNodes().get(Id.createNodeId("6")).getCoord());
+		return act;
+	}
+
+	private Leg createEgressLeg() {
+		Leg leg = population.getFactory().createLeg(TransportMode.walk);
+//		leg.setDepartureTime(departureTime);
+		leg.setRoutingMode("car");
+
+		Route route = RouteUtils.createGenericRouteImpl(Id.createLinkId("5_6"), Id.createLinkId("5_6"));
+		route.setTravelTime(0.0);
+		route.setDistance(0.0);
+		leg.setRoute(route);
+		return leg;
+	}
+
 	private Plan createPlan(Activity startAct, Leg leg, Activity drainAct,
 			Double initPlanScore) {
 		
 		Plan plan = population.getFactory().createPlan();
 
 		plan.addActivity(startAct);
+
+		// access leg and car interaction
+		plan.addLeg(createAccessLeg(startAct.getEndTime().seconds()));
+		plan.addActivity(createAccessCarInteraction());
+
+		// actual leg
 		plan.addLeg(leg);
+
+		// egress leg and car interaction
+		plan.addActivity(createEgressCarInteraction());
+		plan.addLeg(createEgressLeg());
+//		plan.addLeg(createEgressLeg(startAct.getEndTime().seconds() + leg.getTravelTime().seconds()));
+
 		plan.addActivity(drainAct);
 		plan.setScore(initPlanScore);
 		
@@ -239,7 +293,9 @@ public final class TtCreateBraessPopulation {
 	private Leg createMiddleLeg() {
 		Leg legZ = population.getFactory()
 				.createLeg(TransportMode.car);
-		
+
+		legZ.setRoutingMode("car");
+
 		List<Id<Link>> pathZ = new ArrayList<>();
 		pathZ.add(Id.createLinkId("1_2"));
 		if (!this.simulateInflowCap23){
@@ -271,7 +327,8 @@ public final class TtCreateBraessPopulation {
 	private Leg createUpperLeg() {
 		Leg legUp = population.getFactory()
 				.createLeg(TransportMode.car);
-		
+		legUp.setRoutingMode("car");
+
 		List<Id<Link>> pathUp = new ArrayList<>();
 		pathUp.add(Id.createLinkId("1_2"));
 		if (!this.simulateInflowCap23){
@@ -296,7 +353,9 @@ public final class TtCreateBraessPopulation {
 	private Leg createLowerLeg() {
 		Leg legDown = population.getFactory().createLeg(
 				TransportMode.car);
-		
+
+		legDown.setRoutingMode("car");
+
 		List<Id<Link>> pathDown = new ArrayList<>();
 		pathDown.add(Id.createLinkId("1_2"));
 		if (!this.simulateInflowCap24) {

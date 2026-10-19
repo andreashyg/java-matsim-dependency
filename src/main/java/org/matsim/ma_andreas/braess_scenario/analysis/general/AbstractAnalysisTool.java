@@ -154,6 +154,11 @@ public abstract class AbstractAnalysisTool implements PersonArrivalEventHandler,
 	 */
 	@Override
 	public void handleEvent(PersonDepartureEvent event) {
+		// ignore access egress legs
+		if (event.getLegMode().equals("walk")) {
+			return;
+		}
+
 		if (this.personDepartureTimes.containsKey(event.getPersonId())) {
 			throw new IllegalStateException(
 					"A person has departured at least two times without arrival.");
@@ -199,6 +204,11 @@ public abstract class AbstractAnalysisTool implements PersonArrivalEventHandler,
 	 */
 	@Override
 	public void handleEvent(PersonArrivalEvent event) {
+		// ignore access egress legs
+		if (event.getLegMode().equals("walk")) {
+			return;
+		}
+
 		if (!this.personDepartureTimes.containsKey(event.getPersonId())) {
 			throw new IllegalStateException(
 					"Person " + event.getPersonId() + " has arrived without departure.");
