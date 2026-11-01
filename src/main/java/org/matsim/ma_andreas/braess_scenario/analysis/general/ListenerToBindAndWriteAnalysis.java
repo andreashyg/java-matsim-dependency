@@ -77,8 +77,9 @@ public class ListenerToBindAndWriteAnalysis implements IterationEndsListener {
 		// five levels works for the single runs in runs-svn/braess/infPhases/date_properties/ITERS...
 //		String relativePathToGnuplotScript = "../../../../../analysis/" + gnuplotScriptName  + ".p";
 		// nashFlowDir/matsimOutput/braess/date_properties/scaleLevel/randomSeed/ITERS... should be eight?!
-//		String relativePathToGnuplotScript = "../../../../../../../../analysis/" + gnuplotScriptName  + ".p"; // for parametric braess runs from project directory
-		String relativePathToGnuplotScript = "../../../../../../../analysis/" + gnuplotScriptName  + ".p"; // for parametric braess runs from runs svn
+//		String relativePathToGnuplotScript = "../../../../../../../../../../RustroverProjects/parallel_qsim_rust_vs_fot/java_matsim/analysis/" + gnuplotScriptName  + ".p"; // for parametric braess runs from project directory
+		String relativePathToGnuplotScript = "../../../../../../../../../../theresas-gnuplot-scripts/analysis/" + gnuplotScriptName  + ".p"; // for parametric braess runs from project directory on math cluster
+//		String relativePathToGnuplotScript = "../../../../../../../analysis/" + gnuplotScriptName  + ".p"; // for parametric braess runs from runs svn
 //		String relativePathToGnuplotScript = "../../../../../analysis/" + gnuplotScriptName  + ".p"; // for kth braess run
 		
 		log.info("execute command: cd " + pathToSpecificAnalysisDir);

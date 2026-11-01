@@ -33,6 +33,7 @@ import org.matsim.core.utils.misc.Time;
 import org.matsim.ma_andreas.braess_scenario.analysis.AnalyzeBraess;
 import org.matsim.ma_andreas.braess_scenario.analysis.general.*;
 import org.matsim.vehicles.VehicleType;
+import picocli.CommandLine;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -43,6 +44,46 @@ import java.util.Random;
  * @author tthunig
  */
 public class ParametricRunsBraess {
+
+	private static final String RUN_NAME = "original_settings_but_only_leg_scoring_and_brain_1";
+
+	private static final String OVERALL_ANALYSIS_DIR = "../../../runs-svn/braess/refinement/no_spillback_scenario/";
+
+	private static final int MIN_RANDOM_SEED_NUMBER = 1;
+	private static final int MAX_RANDOM_SEED_NUMBER = 20;
+	private static final int RANDOM_SEED_STREAM_SEED = 4711;
+	private static final int RANDOM_SEED_UPPER_BOUND = 10000;
+
+	private static final int MIN_BETA = 1;
+	private static final int MAX_BETA = 64;
+
+
+	@CommandLine.Command(
+			name = "ParametricRunsBraess",
+			mixinStandardHelpOptions = true
+	)
+	private static class CliArgs {
+		@CommandLine.Option(
+				names = "--randomSeedNumber",
+				paramLabel = "N",
+				description = "Run only this random seed number (1..20)."
+		)
+		private Integer optionRandomSeedNumber;
+
+		@CommandLine.Option(
+				names = "--beta",
+				paramLabel = "B",
+				description = "Run only this beta scale (1, 2, 4, 8, 16, 32, 64)."
+		)
+		private Integer optionBeta;
+
+		private Integer getRandomSeedNumber() {
+			return optionRandomSeedNumber;
+		}
+		private Integer getOptionBeta() {
+			return optionBeta;
+		}
+	}
 	
 	private static final SCALE_TYPE vehScaling = SCALE_TYPE.DIRECTLY; // alpha
 	private static final SCALE_TYPE timeScaling = SCALE_TYPE.DIRECTLY; // beta
@@ -56,15 +97,42 @@ public class ParametricRunsBraess {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		
+		Integer singleRandomSeedNumber = parseRandomSeedNumberArgument(args);
+		Integer singleBeta = parseBetaArgument(args);
+
 //		String overallAnalysisDir = "matsimOutput/braess/";
-		String overallAnalysisDir = "../../../runs-svn/braess/refinement/no_spillback_scenario/";
-		overallAnalysisDir += OutputUtils.getCurrentDateIncludingTime() + "_vehScaling" + vehScaling + "_timeScaling" + timeScaling + "/";
+		String overallAnalysisDir = OVERALL_ANALYSIS_DIR;
+//		overallAnalysisDir += OutputUtils.getCurrentDateIncludingTime() + "_vehScaling" + vehScaling + "_timeScaling" + timeScaling;
+//		overallAnalysisDir += OutputUtils.getCurrentDate() + "_vehScaling" + vehScaling + "_timeScaling" + timeScaling;
+		overallAnalysisDir += OutputUtils.getCurrentDate() + "_" + RUN_NAME;
+
+//		// if we run for a single random seed number, we must create a subdirectory, because otherwise we get an
+//		// inconsistent mixture of output directories, depending on when GNU parallel decided to start the runs.
+//		if (singleRandomSeedNumber != null) {
+//			overallAnalysisDir += "_random" + singleRandomSeedNumber;
+//		}
+//		// same thing for a single beta number
+//		if (singleBeta != null) {
+//			overallAnalysisDir += "_beta" + singleBeta;
+//		}
+		overallAnalysisDir += "/";
+
 		new File(overallAnalysisDir).mkdirs();
-		final PrintStream overallRunTimeWritingStream = prepareOverallStream(overallAnalysisDir + "runTime.txt", "beta \talpha \trandomSeed \trunTime");
+		String runtimeFilePath = overallAnalysisDir + "runTime";
+		if (singleRandomSeedNumber != null) {
+			runtimeFilePath += "_random" + singleRandomSeedNumber;
+		}
+		if (singleBeta != null) {
+			runtimeFilePath += "_beta" + singleBeta;
+		}
+		runtimeFilePath += ".txt";
+
+		final PrintStream overallRunTimeWritingStream = prepareOverallStream(runtimeFilePath, "beta \talpha \trandomSeed \trunTime");
 
 //		for (int scaleBetaInverse=1; scaleBetaInverse<=64 ; scaleBetaInverse*=2) {
-		for (int scaleBetaInverse=1; scaleBetaInverse<=64 ; scaleBetaInverse*=2) {
+		int startBeta = singleBeta == null ? MIN_BETA : singleBeta;
+		int endBeta = singleBeta == null ? MAX_BETA : singleBeta;
+		for (int scaleBetaInverse=startBeta; scaleBetaInverse<=endBeta ; scaleBetaInverse*=2) {
 			final double simulationPeriod = 100; // this should stay constant
 //			double totalNumberOfAgents = 100;
 			double flowCapFactor = 1.0;
@@ -115,21 +183,30 @@ public class ParametricRunsBraess {
 
 //			final PrintStream overallTraveltimeWritingStream = prepareOverallStream(thisScaleAnalysisDir + "avgRouteTTsPerDepartureMultipleRuns.txt", "DepartureTime \tavg tt 0");
 
-			Random random = new Random(4711);
+			Random random = new Random(RANDOM_SEED_STREAM_SEED);
 
 			int firstRandom = 1;
-			for (int randomSeedNumber = 1; randomSeedNumber < firstRandom; randomSeedNumber++){
-				random.nextInt(10000);
+			int startRandomSeedNumber = singleRandomSeedNumber == null ? firstRandom : singleRandomSeedNumber;
+			int endRandomSeedNumber = singleRandomSeedNumber == null ? MAX_RANDOM_SEED_NUMBER : singleRandomSeedNumber;
+
+			if (startRandomSeedNumber < firstRandom) {
+				throw new IllegalArgumentException("Requested randomSeedNumber " + startRandomSeedNumber
+						+ " is smaller than firstRandom " + firstRandom + ".");
 			}
 
-			for (int randomSeedNumber=firstRandom; randomSeedNumber <=1; randomSeedNumber++) {
+			for (int randomSeedNumber = MIN_RANDOM_SEED_NUMBER; randomSeedNumber < startRandomSeedNumber; randomSeedNumber++){
+				random.nextInt(RANDOM_SEED_UPPER_BOUND);
+			}
+
+			for (int randomSeedNumber=startRandomSeedNumber; randomSeedNumber <= endRandomSeedNumber; randomSeedNumber++) {
 				// run each configuration multiple times with different random seeds
-				int randomSeed = random.nextInt(10000);
+				int randomSeed = random.nextInt(RANDOM_SEED_UPPER_BOUND);
 
 				Time.setDefaultTimeFormat(Time.TIMEFORMAT_HHMMSSDOTSS);
 
 				Config config = RunBraessSimulation.defineConfig(500);
-				
+//				Config config = RunBraessSimulation.defineConfig(0);
+
 				config.controller().setRunId("beta"+scaleBetaInverse+"random"+randomSeedNumber);
 				
 				config.plans().setInputFile(null);
@@ -137,13 +214,15 @@ public class ParametricRunsBraess {
 //				config.controller().setOutputDirectory(thisScaleAnalysisDir);
 				config.controller().setOutputDirectory(thisScaleAnalysisDir + "random" + randomSeedNumber + "/");
 				config.global().setRandomSeed(randomSeed); // the MATSim default is 4711
-			
+
+				config.global().setNumberOfThreads(1);  // use only one thread, and instead run this script in parallel
+
 				config.qsim().setFlowCapFactor(flowCapFactor);
 				config.qsim().setStorageCapFactor(storageCapFactor);
 				config.qsim().setTimeStepSize(simTimeStepSize);
 //				config.qsim().setUsingFastCapacityUpdate(false);
 				
-//				config.qsim().setTrafficDynamics(TrafficDynamics.kinematicWaves);
+//				config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.kinematicWaves); // TODO comment this for default value "queue"
 //				config.qsim().setTrafficDynamics(TrafficDynamics.withHoles);
 //				config.qsim().setSnapshotStyle(SnapshotStyle.withHoles);
 				
@@ -152,9 +231,12 @@ public class ParametricRunsBraess {
 //				config.qsim().setNodeTransitionLogic(NodeTransition.moveVehByVehRandomDistribution_dontBlockNode);
 				config.qsim().setNodeTransitionLogic(NodeTransition.emptyBufferAfterBufferRandomDistribution_dontBlockNode);
 
+				config.qsim().setNumberOfThreads(1);  // use only one thread, and instead run this script in parallel
+
+
 				// TODO think about dependency between brain exp beta and time step size
 //				config.planCalcScore().setBrainExpBeta(scaleBetaInverse);
-				config.scoring().setBrainExpBeta(10);
+				config.scoring().setBrainExpBeta(1);
 
 				// use the same time bin size in the travel time calculator (for routing)
 				config.travelTimeCalculator().setTraveltimeBinSize(simTimeStepSize);
@@ -237,10 +319,59 @@ public class ParametricRunsBraess {
 		
 		overallRunTimeWritingStream.close();
 		// plot run time vs. beta scale
-		String relativePathToGnuplotScript = "../../../scenarios/braess/analysis/plot_runTimePerScale.p";
-		System.out.println("ParametricRunsBraess: execute command: cd " + overallAnalysisDir);
-		System.out.println("ParametricRunsBraess: and afterwards: gnuplot " + relativePathToGnuplotScript);
-		GnuplotUtils.runGnuplotScript(overallAnalysisDir, relativePathToGnuplotScript);
+//		String relativePathToGnuplotScript = "../../../scenarios/braess/analysis/plot_runTimePerScale.p";
+//		System.out.println("ParametricRunsBraess: execute command: cd " + overallAnalysisDir);
+//		System.out.println("ParametricRunsBraess: and afterwards: gnuplot " + relativePathToGnuplotScript);
+//		GnuplotUtils.runGnuplotScript(overallAnalysisDir, relativePathToGnuplotScript);
+	}
+
+	private static Integer parseRandomSeedNumberArgument(String[] args) {
+		CliArgs cliArgs = new CliArgs();
+		CommandLine commandLine = new CommandLine(cliArgs);
+		CommandLine.ParseResult parseResult;
+		try {
+			parseResult = commandLine.parseArgs(args);
+		} catch (CommandLine.ParameterException e) {
+			throw new IllegalArgumentException(e.getMessage(), e);
+		}
+
+		if (CommandLine.printHelpIfRequested(parseResult)) {
+			System.exit(0);
+		}
+
+		Integer randomSeedNumber = cliArgs.getRandomSeedNumber();
+		if (randomSeedNumber == null) {
+			return null;
+		}
+		if (randomSeedNumber < MIN_RANDOM_SEED_NUMBER || randomSeedNumber > MAX_RANDOM_SEED_NUMBER) {
+			throw new IllegalArgumentException("randomSeedNumber must be in [" + MIN_RANDOM_SEED_NUMBER + ", "
+					+ MAX_RANDOM_SEED_NUMBER + "], but was " + randomSeedNumber + ".");
+		}
+		return randomSeedNumber;
+	}
+
+	private static Integer parseBetaArgument(String[] args) {
+		CliArgs cliArgs = new CliArgs();
+		CommandLine commandLine = new CommandLine(cliArgs);
+		CommandLine.ParseResult parseResult;
+		try {
+			parseResult = commandLine.parseArgs(args);
+		} catch (CommandLine.ParameterException e) {
+			throw new IllegalArgumentException(e.getMessage(), e);
+		}
+
+		if (CommandLine.printHelpIfRequested(parseResult)) {
+			System.exit(0);
+		}
+
+		Integer beta = cliArgs.getOptionBeta();
+		if (beta == null) {
+			return null;
+		}
+		if (beta < MIN_BETA || beta > MAX_BETA) {
+			throw new IllegalArgumentException("beta must be in [" + MIN_BETA + ", " + MAX_BETA + "], but was " + beta + ".");
+		}
+		return beta;
 	}
 
 	private static PrintStream prepareOverallStream(String pathToFile, String header) {

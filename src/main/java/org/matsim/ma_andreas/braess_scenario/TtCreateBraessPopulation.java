@@ -270,15 +270,16 @@ public final class TtCreateBraessPopulation {
 		plan.addActivity(startAct);
 
 		// access leg and car interaction
-		plan.addLeg(createAccessLeg(startAct.getEndTime().seconds()));
-		plan.addActivity(createAccessCarInteraction());
+		plan.addLeg(createAccessLeg(startAct.getEndTime().seconds())); // comment this for routing without a/e legs
+		plan.addActivity(createAccessCarInteraction()); // comment this for routing without a/e legs
 
 		// actual leg
 		plan.addLeg(leg);
 
 		// egress leg and car interaction
-		plan.addActivity(createEgressCarInteraction());
-		plan.addLeg(createEgressLeg());
+		plan.addActivity(createEgressCarInteraction()); // comment this for routing without a/e legs
+		plan.addLeg(createEgressLeg());  // comment this for routing without a/e legs
+
 //		plan.addLeg(createEgressLeg(startAct.getEndTime().seconds() + leg.getTravelTime().seconds()));
 
 		plan.addActivity(drainAct);

@@ -124,7 +124,7 @@ public final class RunBraessSimulation {
 //		config.qsim().setUsingFastCapacityUpdate(false);
 		
 		// set brain exp beta
-		config.scoring().setBrainExpBeta(10);
+		config.scoring().setBrainExpBeta(1);
 
 		// choose between link to link and node to node routing
 		// (only has effect if lanes are used)
@@ -195,6 +195,7 @@ public final class RunBraessSimulation {
 
 		// TODO adapt here
 		config.scoring().setFractionOfIterationsToStartScoreMSA(0.8);
+//		config.scoring().setFractionOfIterationsToStartScoreMSA(1.0);
 		config.scoring().setLearningRate(1.); // nur relevant für bereich vor MSA!
 
 		config.replanning().setMaxAgentPlanMemorySize(5);
@@ -204,9 +205,9 @@ public final class RunBraessSimulation {
 //		config.qsim().setNodeTransitionLogic(QSimConfigGroup.NodeTransition.moveVehByVehDeterministicPriorities_nodeBlockedWhenSingleOutlinkFull);
 
 		config.routing().setAccessEgressType(RoutingConfigGroup.AccessEgressType.accessEgressModeToLink);
+//		config.routing().setAccessEgressType(RoutingConfigGroup.AccessEgressType.none);  // use this for routing without a/e legs
 
-		config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.queue); // default
-//		config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.kinematicWaves);
+		config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.queue); // default  // TODO change this in ParametricRuns if needed
 
 		config.qsim().setStuckTime(3600 * 24.);
 		config.qsim().setRemoveStuckVehicles(false);
@@ -236,6 +237,7 @@ public final class RunBraessSimulation {
 
 		ScoringConfigGroup.ActivityParams dummyAct = new ScoringConfigGroup.ActivityParams("dummy");
 		dummyAct.setTypicalDuration(12 * 3600);
+		dummyAct.setScoringThisActivityAtAll(false);  // NEW: turn off scoring of dummy activity
 		config.scoring().addActivityParams(dummyAct);
 
 		config.controller().setCreateGraphs(true);

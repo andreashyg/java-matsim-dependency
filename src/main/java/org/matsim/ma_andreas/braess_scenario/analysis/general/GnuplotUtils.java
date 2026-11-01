@@ -86,7 +86,7 @@ public class GnuplotUtils {
 			// If OS is Linux --- example (benjamin) // os.arch=amd64 // os.name=Linux	// os.version=3.13.0-45-generic
 			} else if ( osName.contains("Lin") || osName.contains("lin") ) {
 				LOG.warn("This implemenation has not yet been tested for Linux. Please report if you use this.");
-				processBuilder = new ProcessBuilder("bash", "-c", "(cd " + pathToSpecificAnalysisDir + " && /usr/local/bin/gnuplot " + relativePathToGnuplotScript + ")");
+				processBuilder = new ProcessBuilder("bash", "-c", "(cd " + pathToSpecificAnalysisDir + " && /usr/bin/gnuplot " + relativePathToGnuplotScript + ")");
 			
 			// If OS is neither Win nor Mac nor Linux
 			} else {
