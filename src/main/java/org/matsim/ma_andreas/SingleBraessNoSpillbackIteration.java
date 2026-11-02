@@ -107,6 +107,10 @@ public class SingleBraessNoSpillbackIteration extends MATSimApplication {
 
 		// make sure that times are written in decimal format, so nothing is lost.
 		setDefaultTimeFormat(TIMEFORMAT_HHMMSSDOTSS);
+
+		// set number of threads to 1, since we rather want to calculate several simulations in parallel
+		config.qsim().setNumberOfThreads(1);
+		config.global().setNumberOfThreads(1);
 		// ---
 
 		return config;
