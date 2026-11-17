@@ -77,6 +77,7 @@ public class SingleBraessNoSpillbackIteration extends MATSimApplication {
 		}
 		else {
 			System.out.println("Not deleting output directory if it exists. Using default FailIfDirectoryExists setting.");
+			config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.failIfDirectoryExists);
 			if (config.controller().getOverwriteFileSetting() != OutputDirectoryHierarchy.OverwriteFileSetting.failIfDirectoryExists) {
 				System.out.println("Warning: OverwriteFileSetting is not set to FailIfDirectoryExists. Current setting: " + config.controller().getOverwriteFileSetting());
 				throw new RuntimeException("OverwriteFileSetting is not set to FailIfDirectoryExists. Default seems to be overwritten somewhere.");
